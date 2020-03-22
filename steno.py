@@ -1,19 +1,29 @@
-
+import numpy as np
 
 '''
 [0-3] - length in bytes. [l0 l1 l2]
+[4-...] - data
 '''
+
+def print_array(data, len):
+
+    i = 0
+    for d in data:
+        print(f"{i} {d}")
+        i+=1
+        if i >= len:
+            break
 
 def steno_data_length(length_value):
 
-    length2 = length_value & 0xFF
-    length1 = (length_value >> 8) & 0xFF
-    length0 = (length_value >> 16) & 0xFF
+    length2 = np.uint8(length_value & 0xFF)
+    length1 = np.uint8((length_value >> 8) & 0xFF)
+    length0 = np.uint8((length_value >> 16) & 0xFF)
 
     return (length0, length1, length2)
 
 def unsteno_data_length(medium):
-    length = 0
+    length = 0 # int32
 
     length |= medium[0]
     length = length << 8
@@ -25,6 +35,8 @@ def unsteno_data_length(medium):
 
 
 def steno_byte_array(medium, data):
+
+    #print_array(medium, 10)
 
     if len(medium) < 3 + len(data)*3:
         raise Exception("Medium size too small")
@@ -39,11 +51,14 @@ def steno_byte_array(medium, data):
     i = 3
     for d in data:
         (m0,m1,m2) = steno(medium[i], medium[i+1], medium[i+2], d)
+
         medium[i] = m0
         medium[i+1] = m1
         medium[i+2] = m2
 
         i += 3
+
+    #print_array(medium, 10)
 
     return medium
 
@@ -51,6 +66,10 @@ def steno_byte_array(medium, data):
 def unsteno_byte_array(medium):
     
     length = unsteno_data_length(medium)
+
+    #print(type(length))
+    #print(length)
+
     data = bytearray(length)
 
     d = 0
@@ -65,9 +84,10 @@ def unsteno_byte_array(medium):
     return data
 
 def steno(b, g, r, value):
-    b = (b & 0xF8) | (value & 7) # 3 bit 11111000
-    g = (g & 0xFC) | ((value>>3) & 3) # 2 bit 11111100
-    r = (r & 0xF8) | ((value>>5) & 7) # 3 bit 11111000
+
+    b = np.uint8((b & 0xF8) | (value & 7)) # 3 bit 11111[111]
+    g = np.uint8((g & 0xFC) | ((value>>3) & 3)) # 2 bit 111[11]111
+    r = np.uint8((r & 0xF8) | ((value>>5) & 7)) # 3 bit [111]11111
 
     return (b, g, r)
     
